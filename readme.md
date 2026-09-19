@@ -208,6 +208,67 @@
   * `sh shfiles/rspx4.sh`
   * `roslaunch ego_planner single_run_in_exp.launch`
   * 进入远程桌面 `roslaunch ego_planner rviz.launch`
+ 
+  调节外参时，会出现这样的问题：
+- VINS外参精确自标定
+    `启动sh shfiles/rspx4.sh`
+    会出现：
+    RLException: [fast_drone_250.launch] is neither a launch file in package [vins] nor is [vins] a launch file name
+    The traceback for the exception was written to the log file
+    
+    此时：我们应该：
+    source ~/Fast-Drone-250/devel/setup.bash
+    
+    `source` 之后再次执行：
+    
+    ```
+    roslaunch vins fast_drone_250.launch
+    ```
+    
+    又出现：
+    
+    ```
+    Cannot locate node of type [vins_node] in package [vins]
+    ```
+    
+    检查发现：
+    
+    ```
+    ~/Fast-Drone-250/devel/lib/vins/
+    这个为空
+    ```
+    
+    重新编译工程：
+    
+    ```jsx
+    cd ~/Fast-Drone-250
+    source /opt/ros/noetic/setup.bash
+    catkin_make -DCMAKE_BUILD_TYPE=Release -j4
+    ```
+    
+
+  同时还发现原来的 `rspx4.sh` 中 RealSense 启动命令没有打开，所以脚本的问题，我改成了：
+roslaunch realsense2_camera rs_camera.launch
+变成：
+roslaunch realsense2_camera rs_camera.launch enable_infra1:=true enable_infra2:=true
+
+```jsx
+如果进行了上述再次运行还报错，比如：
+wait for imu ...
+wait for imu ...
+wait for imu ...
+wait for imu ...
+wait for imu ...
+wait for imu ...
+```
+
+```jsx
+one@one-NUC11PAHi5:~/桌面rostopic echo /vins_fusion/imu_propagate
+^Cone@one-NUC11PAHi5:~/桌面 rostopic echo /vins_fusion/imu_propagate
+WARNING: topic [/vins_fusion/imu_propagate] does not appear to be published yet
+```
+
+极大可能是因为只给机载电脑上电了，这个时候要用电池供电即可
 
 ## 第十一章：Ego-Planner的实验
 * 自动起飞：
